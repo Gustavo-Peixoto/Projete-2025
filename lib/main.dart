@@ -37,7 +37,7 @@ var mobileFormatter = MaskTextInputFormatter(
   type: MaskAutoCompletionType.lazy,
 );
 
-const String ips = "172.20.10.2:5000";
+const String ips = "localhost:5000";
 
 int? idVeterinario;
 
@@ -1984,7 +1984,9 @@ class _FotoState extends State<Foto> {
         debugPrint("Resposta do servidor: ${postResponse.body}");
         var data = jsonDecode(postResponse.body);
 
-        List<dynamic> racoesJson = data['racoes'];
+        List<Map<String, dynamic>> racoesJson = List<Map<String, dynamic>>.from(
+          data['racoes']['racoes'],
+        );
 
         setState(() {
           racoes = racoesJson.map((b) => Recomendacoes.fromJson(b)).toList();
@@ -2722,9 +2724,9 @@ class _DetalhesLaudoState extends State<DetalhesLaudo> {
 
               pw.Text("Exame:", style: pw.TextStyle(fontSize: 14)),
               pw.SizedBox(height: 8),
-              ...ali.map((e) {
+              ...ali.where((e) => e['name'] != "Sem nome").map((e) {
                 final nome = e['name'];
-                final veri = e['veri'] == 1 ? "Não contem." : "Contem.";
+                final veri = e['veri'] == 0 ? "Não contem." : "Contem.";
                 return pw.Text(
                   "- $nome : $veri",
                   style: pw.TextStyle(fontSize: 14),
@@ -2824,6 +2826,17 @@ class _DetalhesLaudoState extends State<DetalhesLaudo> {
 
     final widthFactor = screenWidth / 360;
     final heightFactor = screenHeight / 808;
+
+    final listaalimentos = jsonDecode(widget.laudo.alimentos);
+
+    final alergias = listaalimentos
+        .where((a) => a["name"] != "Sem nome" && a["veri"] == 1)
+        .map((a) => a["name"])
+        .join(", ");
+
+    final listaracoes = jsonDecode(widget.laudo.racoes);
+
+    final racoes = listaracoes.map((a) => a['nome']).join(", ");
 
     return Scaffold(
       body: Stack(
@@ -2984,7 +2997,7 @@ class _DetalhesLaudoState extends State<DetalhesLaudo> {
                                     alignment: Alignment.center,
                                     padding: EdgeInsets.zero,
                                     child: Text(
-                                      'Alergias: ${formatarData(widget.laudo.alimentos)}',
+                                      'Alergias: $alergias',
                                       style: TextStyle(
                                         fontSize: 12 * widthFactor,
                                       ),
@@ -3017,7 +3030,7 @@ class _DetalhesLaudoState extends State<DetalhesLaudo> {
                                     alignment: Alignment.center,
                                     padding: EdgeInsets.zero,
                                     child: Text(
-                                      'Rações recomendadas: ${formatarData(widget.laudo.racoes)}',
+                                      'Rações recomendadas: $racoes',
                                       style: TextStyle(
                                         fontSize: 12 * widthFactor,
                                       ),
